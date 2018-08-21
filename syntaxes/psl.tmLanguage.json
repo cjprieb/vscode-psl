@@ -277,8 +277,8 @@
 			"patterns": [
 				{
 					"name": "comment.block.psl",
-					"begin": "^---------- REVHIST ------ Section marker",
-					"end": "^---------- OPEN ------ Section marker",
+					"begin": "^---------- REVHIST\\s+------ Section marker",
+					"end": "^---------- OPEN\\s+------ Section marker",
 					"beginCaptures": {
 						"0": {
 							"patterns": [
