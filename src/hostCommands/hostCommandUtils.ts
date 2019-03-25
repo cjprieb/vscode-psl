@@ -8,11 +8,11 @@ const outputChannel = vscode.window.createOutputChannel('Profile Host');
 
 export const logger = {
 	info: (message: string) => {
-		outputChannel.show();
+		outputChannel.show(true);
 		outputChannel.appendLine(`[INFO][${new Date().toTimeString().split(' ')[0]}]    ${message.trim()}\n`)
 	},
 	error: (message: string) => {
-		outputChannel.show();
+		outputChannel.show(true);
 		outputChannel.appendLine(`[ERR!][${new Date().toTimeString().split(' ')[0]}]    ${message.trim()}\n`)
 	}
 }
@@ -37,6 +37,10 @@ export const enum ContextMode {
 	EMPTY = 3
 }
 
+const enum NEWLINE_SETTING {
+	ALWAYS = 'always',
+	NEVER = 'never',
+}
 
 export interface ExtensionCommandContext {
 	fsPath: string;
@@ -84,7 +88,7 @@ export async function executeWithProgress(message: string, task: () => Promise<a
 export async function getConnection(env: environment.EnvironmentConfig): Promise<MtmConnection> {
 	let connection: MtmConnection;
 	try {
-		connection = MtmConnection.getSocket('121', 3);
+		connection = MtmConnection.getSocket('121', 3, env.serverType, env.encoding);
 		await connection.open(env.host, env.port, env.user, env.password);
 	}
 	catch (err) {
@@ -121,4 +125,38 @@ export async function getCommandenvConfigQuickPick(envs: environment.Environment
 	let choice = await vscode.window.showQuickPick(items, { placeHolder: 'Select environment to get from.' });
 	if (!choice) return undefined;
 	return choice.env
+}
+
+export function writeFileWithSettings(fsPath: string, output: string): Promise<void> {
+	const trailingNewline: NEWLINE_SETTING = vscode.workspace.getConfiguration('psl', null).get('trailingNewline');
+	switch (trailingNewline) {
+		case NEWLINE_SETTING.ALWAYS:
+			if (!output.endsWith('\n')) output += detectNewline(output);
+			break;
+		case NEWLINE_SETTING.NEVER:
+			output = output.replace(/(\r?\n)+$/, '');
+			break;
+		default:
+			break;
+	}
+	return fsExtra.writeFile(fsPath, output);
+}
+
+/**
+ * https://github.com/sindresorhus/detect-newline
+ */
+function detectNewline(output: string) {
+	const newlines = (output.match(/(?:\r?\n)/g) || []);
+
+	if (newlines.length === 0) {
+		return '\n';
+	}
+
+	const crlfCount = newlines.filter(el => {
+		return el === '\r\n';
+	}).length;
+
+	const lfCount = newlines.length - crlfCount;
+
+	return crlfCount > lfCount ? '\r\n' : '\n';
 }

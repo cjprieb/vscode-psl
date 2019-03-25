@@ -2,7 +2,7 @@
   "name": "vscode-psl",
   "displayName": "vscode-psl",
   "description": "Profile Scripting Language support",
-  "version": "1.5.1",
+  "version": "1.8.1",
   "preview": true,
   "publisher": "ing-bank",
   "engines": {
@@ -23,7 +23,8 @@
     "onCommand:psl.configureEnvironment",
     "onCommand:psl.sendElement",
     "onCommand:psl.compileAndLink",
-    "onCommand:psl.runPSL"
+    "onCommand:psl.runPSL",
+    "onCommand:psl.launchHostTerminal"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -244,6 +245,11 @@
       {
         "command": "psl.refreshTable",
         "title": "Table Refresh from Host",
+        "category": "PSL"
+      },
+      {
+        "command": "psl.previewDocumentation",
+        "title": "Preview Documentation",
         "category": "PSL"
       }
     ],
@@ -563,6 +569,11 @@
       ],
       "editor/title": [
         {
+          "command": "psl.previewDocumentation",
+          "group": "navigation@-206",
+          "when": "resourceLangId == psl && psl.hasDocumentationServer"
+        },
+        {
           "command": "psl.refreshElement",
           "group": "navigation@-205",
           "when": "resourceLangId == profileData"
@@ -670,6 +681,11 @@
           "group": "PSL"
         },
         {
+          "when": "resourceLangId == psl && psl.hasDocumentationServer",
+          "command": "psl.previewDocumentation",
+          "group": "PSL"
+        },
+        {
           "when": "resourceLangId == profileColumn",
           "command": "psl.refreshTable",
           "group": "PSL"
@@ -722,6 +738,27 @@
           "type": "boolean",
           "default": false,
           "description": "Set true to enable the latest developing features (requires restart)."
+        },
+        "psl.documentationServer": {
+          "scope": "resource",
+          "type": "string",
+          "description": "HTTP POST endpoint that responds with PSL documentation in markdown format."
+        },
+        "psl.trailingNewline": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "default",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Allows the default behavior, makes no modification.",
+            "Always add a trailing newline if not present.",
+            "Remove trailing newlines if they are present."
+          ],
+          "default": "default",
+          "description": "Adds a trailing newline after a \"Get\" or \"Refresh\"."
         }
       }
     }
@@ -729,6 +766,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "compile-lint": "tsc -p ./src/pslLint/cli",
+    "lint": "tslint -c tslint.json --project .",
     "watch": "npm run compile -- -watch",
     "test": "jest"
   },
@@ -751,6 +789,7 @@
     "fs-extra": "^5.0.0",
     "jsonc-parser": "^1.0.0",
     "minimatch": "^3.0.4",
+    "request-light": "^0.2.4",
     "vscode-json-languageservice": "^3.2.0"
   },
   "jest": {
