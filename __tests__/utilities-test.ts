@@ -124,6 +124,15 @@ describe('ParsedDocFinder.resolveResult', () => {
 
 	let parsedParent: ParsedDocument;
 
+	const getPaths = (activeRoutine: string): FinderPaths => {
+		return {
+			activeRoutine,
+			corePsl: '',
+			projectPsl: [filesDir],
+			tables: [],
+		};
+	}
+
 	beforeAll(async () => {
 		filesDir = path.resolve('__tests__', 'files');
 
@@ -134,12 +143,7 @@ describe('ParsedDocFinder.resolveResult', () => {
 	});
 
 	test('Find local method', async () => {
-		const paths: utilities.FinderPaths = {
-			corePsl: '',
-			projectPsl: [filesDir],
-			routine: parentFilePath,
-			table: '',
-		};
+		const paths = getPaths(parentFilePath);
 		const finder: utilities.ParsedDocFinder = new utilities.ParsedDocFinder(parsedParent, paths);
 		let result = await finder.resolveResult([
 			new tokenizer.Token(tokenizer.Type.Alphanumeric, 'methodInParent', { character: 15, line: 4 })
@@ -151,12 +155,7 @@ describe('ParsedDocFinder.resolveResult', () => {
 	});
 
 	test('Find method in current procedure', async () => {
-		const paths: utilities.FinderPaths = {
-			corePsl: '',
-			projectPsl: [filesDir],
-			routine: parentFilePath,
-			table: '',
-		};
+		const paths = getPaths(parentFilePath);
 		const finder: utilities.ParsedDocFinder = new utilities.ParsedDocFinder(parsedParent, paths);
 		let result = await finder.resolveResult([
 			new tokenizer.Token(tokenizer.Type.Alphanumeric, 'ZParent', { character: 26, line: 4 }),
@@ -169,12 +168,7 @@ describe('ParsedDocFinder.resolveResult', () => {
 	});
 
 	test('Find method in external procedure', async () => {
-		const paths: utilities.FinderPaths = {
-			corePsl: '',
-			projectPsl: [filesDir],
-			routine: parentFilePath,
-			table: '',
-		};
+		const paths = getPaths(parentFilePath);
 		const finder: utilities.ParsedDocFinder = new utilities.ParsedDocFinder(parsedParent, paths);
 		let result = await finder.resolveResult([
 			new tokenizer.Token(tokenizer.Type.Alphanumeric, 'ZProcedureName', { character: 26, line: 4 }),
@@ -187,12 +181,7 @@ describe('ParsedDocFinder.resolveResult', () => {
 	});
 
 	test('Find external procedure', async () => {
-		const paths: utilities.FinderPaths = {
-			corePsl: '',
-			projectPsl: [filesDir],
-			routine: parentFilePath,
-			table: '',
-		};
+		const paths = getPaths(parentFilePath);
 		const finder: utilities.ParsedDocFinder = new utilities.ParsedDocFinder(parsedParent, paths);
 		let result = await finder.resolveResult([
 			new tokenizer.Token(tokenizer.Type.Alphanumeric, 'ZProcedureName', { character: 26, line: 4 })

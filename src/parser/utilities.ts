@@ -69,7 +69,7 @@ export class ParsedDocFinder {
 				finder = await finder.newFinder(callTokens[0].value);
 				if (finder) {
 					return {
-						fsPath: finder.paths.routine,
+						fsPath: finder.paths.activeRoutine,
 					};
 				}
 			}
