@@ -8,6 +8,17 @@ function getTokens(str: string): tokenizer.Token[] {
 	return [...tokenizer.getTokens(str)];
 }
 
+const filesDir = path.resolve('__tests__', 'files');
+
+const getPaths = (activeRoutine: string): FinderPaths => {
+	return {
+		activeRoutine,
+		corePsl: '',
+		projectPsl: [filesDir],
+		tables: [],
+	};
+};
+
 describe('completion', () => {
 	test('empty', () => {
 		const tokensOnLine: tokenizer.Token[] = [];
@@ -117,7 +128,6 @@ describe('completion', () => {
 });
 
 describe('ParsedDocFinder.resolveResult', () => {
-	let filesDir: string;
 
 	let parentFilePath: string;
 	let procedureNameFilePath: string;
@@ -134,7 +144,6 @@ describe('ParsedDocFinder.resolveResult', () => {
 	}
 
 	beforeAll(async () => {
-		filesDir = path.resolve('__tests__', 'files');
 
 		parentFilePath = path.join(filesDir, 'ZParent.PROC');
 		procedureNameFilePath = path.join(filesDir, 'ZProcedureName.PROC');
@@ -192,7 +201,6 @@ describe('ParsedDocFinder.resolveResult', () => {
 });
 
 describe('ParsedDocFinder.searchParser', () => {
-	let filesDir: string;
 
 	let parentFilePath: string;
 	let childFilePath: string;
@@ -200,17 +208,7 @@ describe('ParsedDocFinder.searchParser', () => {
 	let parsedParent: ParsedDocument;
 	let parsedChild: ParsedDocument;
 
-	const getPaths = (activeRoutine: string): FinderPaths => {
-		return {
-			activeRoutine,
-			corePsl: '',
-			projectPsl: [filesDir],
-			tables: [],
-		};
-	}
-
 	beforeAll(async () => {
-		filesDir = path.resolve('__tests__', 'files');
 
 		parentFilePath = path.join(filesDir, 'ZParent.PROC');
 		childFilePath = path.join(filesDir, 'ZChild.PROC');
