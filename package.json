@@ -2,9 +2,9 @@
   "name": "vscode-psl",
   "displayName": "vscode-psl",
   "description": "Profile Scripting Language support",
-  "version": "1.11.3",
+  "version": "1.12.1",
   "preview": true,
-  "publisher": "ing-bank",
+  "publisher": "agvantis",
   "engines": {
     "vscode": "^1.23.0"
   },
@@ -813,8 +813,13 @@
     "jsonc-parser": "^1.0.0",
     "minimatch": "^3.0.4",
     "request-light": "^0.2.4",
-    "vscode-json-languageservice": "^3.2.0"
+    "vscode-json-languageservice": "^3.2.0",
+    "vscode-test-adapter-api": "^1.7.0",
+    "vscode-test-adapter-util": "^0.7.0"
   },
+  "extensionDependencies": [
+    "hbenl.vscode-test-explorer"
+  ],
   "jest": {
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
