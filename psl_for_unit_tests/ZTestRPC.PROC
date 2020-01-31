@@ -1,0 +1,155 @@
+//DO NOT MODIFY  RPC for - Unit Tests|ZTestRPC|||||||1
+	#PACKAGE custom
+	#OPTION ResultClass ON
+
+	// -------------------------------------------------------------------
+public String ZTestRPC(
+		  req ret ByteString REPLY,	// Return value	(LV enc)
+		  req String rpcVersion,
+		  req String testMethod,
+		  String zv4,
+		  String fileToken
+		)	//Next Generation Solution Remote Procedure Call driver
+	/* DOC----------------------------------------------------------------
+	  Developed by: Crystal Prieb
+	
+	  Description: 
+
+		Assumes the provided `testMethod` is a unit test and runs it 
+		indirectly. The results are returned as a JSON string that 
+	  	matches the TestEvent specifications of vscode-test-adapter-api 
+	  	(available on GitHub).
+		  {
+			  "type": "test"
+			  "test": testMethod,
+			  "state": "",     // Permitted values: `passed`, `failed`, `errored`
+			  "message": "",   // A message describing the failure or error.
+			  "line": 0 	   // Which line of the `testMethod` the 
+			                      failure/error occurred on. Not included
+								  if the line is unknown or in another
+								  method.
+		  }
+
+	  Activate by running:
+		```
+set ^DBSFUNC("^ZTestRPC")="Unit Test runner|$$^ZTestRPC|0"
+set ^DBSFUNCUCLS("^ZTestRPC","SCA")=0
+		```
+	
+	  Called By: VS Code PSL Extension
+	
+	  Calls:     the `testMmethod` passed in
+
+	** ENDDOC */
+
+	type String response = $$runTest(testMethod.get())
+	set REPLY = $$valueToLV^PbsLv(response)
+
+	return ""
+
+
+private String runTest(req String testMethod)
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+	type PslJsonObject json = Class.new("PslJsonObject", false)
+
+	type String zUnitTestStatus = ""
+	type String zUnitTestMessage = ""	
+	type String zUnitTestThrownAt = ""
+
+	do runIndirectly(testMethod)
+
+	do json.putString("type", "test")
+	do json.putString("test", testMethod)
+	do json.putString("state", zUnitTestStatus)
+	do json.putString("message", zUnitTestMessage)
+
+	// parse zUnitTestThrownAt
+	type String line = $$getLine(testMethod, zUnitTestThrownAt)
+	if line.isNotNull() do json.putString("line", zUnitTestThrownAt)
+
+	return json.toJSONtext(false, "")
+
+
+private void runIndirectly(req String testMethod)
+	/* DOC ----------------------------------------------------------------
+	Runs the `testMethod` indirectly, catching an errors that are thrown
+	(assertion failures or otherwise).
+
+	The public variables `zUnitTestStatus`, `zUnitTestMessage`, 
+	`zUnitTestThrownAt` are used to return the test results to the caller
+	of ZTestRPC.
+	** ENDDOC */
+
+	type public String zUnitTestStatus, zUnitTestMessage, zUnitTestThrownAt
+
+	set zUnitTestStatus = "passed" 
+
+	catch error {
+        set zUnitTestStatus = "failed"
+        if zUnitTestMessage.get() = "" {
+			// If zUnitTestMessage is null, then likely this error is
+			// not an assertion failure and we need to get the details
+			// from the error itself.
+        	set zUnitTestStatus = "errored"
+            set zUnitTestThrownAt = error.thrownAt
+			set zUnitTestMessage = error.description
+        }
+	} 
+    do @testMethod
+
+	quit
+
+private String getLine(
+	  req String testMethod
+	, req String thrownAtMethod
+	)
+	/* DOC ----------------------------------------------------------------
+
+	** ENDDOC */
+	
+	type String line = ""
+
+	type String testLabel = testMethod.piece("^", 1)
+	type String testProcedure = testMethod.piece("^", 2)
+
+	type String thrownAtLabel = thrownAtMethod.piece("^", 1).piece("+", 1)
+	type String thrownAtLine = thrownAtMethod.piece("^", 1).piece("+", 2)
+	type String thrownAtProcedure = thrownAtMethod.piece("^", 2)
+	
+	if (testProcedure = thrownAtProcedure) and (testLabel = thrownAtLabel) {
+		set line = thrownAtLine
+	}
+
+	return line
+
+
+public void setFailedTestData(
+	  req String caller
+	, req String failureDescription
+	, String message)	
+	/* DOC ----------------------------------------------------------------
+	Sets the public variables `zUnitTestThrownAt` and `zUnitTestMessage`
+	for use by error handler in runIndirectly. 
+
+	Ideally, the failureDescription would be included as part
+	of the error message when throwing a failed assertion exception :
+		`throw Class.new("Error", "ZUNITTEST-E-FAIL,"_caller_","_message)`
+
+	However, both commas and pipes (`|`) are used by the error handling 
+	process to seperate the error data. If the failureDescription 
+	contained those as part of its value, the message would be extracted
+	wrong by the error handler in `runIndirectly^ZTestRPC`. So public 
+	variables are used as a work-around to avoid stripping any data from
+	the failureDescription.
+
+	** ENDDOC */
+    type public String zUnitTestThrownAt, zUnitTestMessage
+
+    set message = $select(message.get().isNotNull():" for "_message.get(),1:"")
+
+    set zUnitTestThrownAt = caller
+	set zUnitTestMessage = failureDescription_message.get()
+
+    quit

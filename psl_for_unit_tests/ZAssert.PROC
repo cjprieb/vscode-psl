@@ -1,0 +1,84 @@
+//DO NOT MODIFY  Assert methods for unit tests|ZAssert|||||||1
+	#PACKAGE custom
+	#CLASSDEF public delimiter=9
+
+	/* DOC ----------------------------------------------------------------
+	The collection of methods for verifing results in unit tests.
+
+    When adding a new assertion method, do the following to 
+    report a failure:
+        1. Call $$getCaller at the top of the method (outside of any tests)
+           to load the calling method label and procedure.
+        2. Build a detailed message describing the failure.
+        3. Pass the caller and detailed message to `setFailedTestData^ZTestRPC`.
+           This will store the data for the test runner to pick up.
+        4. Throw a new ZUNITTEST-E-FAIL error. This will be caught 
+           by the test runner, which will report back the failed test data.
+    
+	** ENDDOC */
+
+	// ---------------------------------------------------------------------
+	#PROPERTYDEF dummy class=String position=2 private readonly
+    /* DOC ----------------------------------------------------------------
+    Dummy property to allow classdef
+    ** ENDDOC */       
+
+
+public static void areEqual(
+        req String expected
+      , req String actual
+      , String message
+    )
+    /* DOC ----------------------------------------------------------------
+    Verifies that the `expected` value matches the `actual` value. If a
+    `message` is included and the check fails, the message will be appended 
+    to the error message.
+    
+    If they don't match, an error (ZUNITTEST-E-FAIL) is thrown.  
+    ** ENDDOC */
+	type String caller = $$getCaller() // needs to be called first in method.
+	if expected '= actual {
+        type String errorMessage = "Expected '"_expected.get()_"' but found '"_actual.get()_"'"
+        type String detailMessage = errorMessage_$select(message.get().isNotNull():" for "_message.get(),1:"")
+        do setFailedTestData^ZTestRPC(caller, detailMessage)
+	    throw Class.new("Error", "ZUNITTEST-E-FAIL,"_caller)
+    }
+	quit
+
+
+public static void isNull(
+        req String actual
+      , String message)
+    /* DOC ----------------------------------------------------------------
+    Verifies that the `actual` value is null (""). If a
+    `message` is included and the check fails, the message will be appended 
+    to the error message.
+    
+    If they don't match, an error (ZUNITTEST-E-FAIL) is thrown.  
+    ** ENDDOC */
+	type String caller = $$getCaller() // needs to be called first in method.
+	if actual'="" {
+        type String errorMessage = "Expected '' but found '"_actual.get()_"'"
+        do setFailedTestData^ZTestRPC(caller, errorMessage, message)
+	    throw Class.new("Error", "ZUNITTEST-E-FAIL,"_caller)
+    }
+	quit
+
+
+private static String getCaller()
+    /* DOC ----------------------------------------------------------------
+    Loads the call stack and looks for the method that called the ^ZAssert
+    method. This should be 3 levels up:
+        stack("S",1)=getCaller^ZAssert
+        stack("S",2)=areEqual^ZAssert ; or another ZAssert method
+        stack("S",3)=testMethod^ZTestProcedure
+    ** ENDDOC */
+    type String caller = ""
+    type public String stack
+    set stack = ""
+	#ACCEPT GROUP=BYPASS;DATE=2019-12-17;PGM=Crystal Prieb
+	#BYPASS TARGET=M
+	zshow "S":stack ; stores the stack data in `stack`
+	set caller=stack("S",3)
+    #ENDBYPASS
+    return caller
